@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Charm Studio</title>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">C</div>
+                <div class="logo-text">Charm</div>
+            </div>
+            <nav class="nav">
+                <a href="dashboard.html" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    My Dashboard
+                </a>
+                <a href="design.html" class="nav-item">
+                    <span class="nav-icon">🎨</span>
+                    Designer Studio
+                </a>
+                <a href="orders.html" class="nav-item">
+                    <span class="nav-icon">📦</span>
+                    Orders
+                </a>
+            </nav>
+            <div class="sidebar-logout">
+                <button class="btn btn-ghost" style="width: 100%; justify-content: center;">
+                    <span>🚪</span> Logout
+                </button>
+            </div>
+        </aside>
+
+        <div class="main">
+          <header class="header">
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search designs...">
+    </div>
+
+    <div class="header-actions">
+        <button class="btn btn-ghost" id="logoutBtn">
+            <span>🚪</span> Logout
+        </button>
+    </div>
+</header>
+
+            <div class="page-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Charms</div>
+                        <div class="stat-value">128</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Active Orders</div>
+                        <div class="stat-value">12</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Saved Designs</div>
+                        <div class="stat-value">24</div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2 class="section-title">Your Designs</h2>
+                    <a href="design.html" class="btn btn-outline"><span>✨</span> Create New</a>
+                </div>
+
+                <div class="designs-grid">
+                    <div class="design-card">
+                        <div class="design-preview"><div class="design-placeholder">🌟</div></div>
+                        <div class="design-info"><div class="design-name">Golden Star</div></div>
+                    </div>
+                    <div class="design-card">
+                        <div class="design-preview"><div class="design-placeholder">🌙</div></div>
+                        <div class="design-info"><div class="design-name">Moonlight</div></div>
+                    </div>
+                    <a href="design.html" class="create-card">
+                        <div class="create-icon">+</div>
+                        <div class="create-text">Create New Design</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+
+    // ===============================
+    // AUTH CHECK
+    // ===============================
+
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+    // Redirect if not logged in
+    if (!currentUser) {
+        window.location.href = "index.html";
+    }
+
+    // ===============================
+    // LOGOUT
+    // ===============================
+
+    function logout() {
+        localStorage.removeItem("currentUser");
+
+        alert("Logged out successfully!");
+
+        window.location.href = "index.html";
+    }
+
+    // Attach logout buttons
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const logoutBtn = document.getElementById("logoutBtn");
+
+        if (logoutBtn) {
+            logoutBtn.addEventListener("click", logout);
+        }
+
+        const sidebarLogoutBtn = document.querySelector(".sidebar-logout button");
+
+        if (sidebarLogoutBtn) {
+            sidebarLogoutBtn.addEventListener("click", logout);
+        }
+
+    });
+
+    // ===============================
+    // INITIALIZE DEMO DATA
+    // ===============================
+
+    function initDemoData() {
+
+        if (!localStorage.getItem('charm_designs')) {
+
+            const demoDesigns = [
+                { id: 1, name: 'Golden Star', emoji: '🌟', created: Date.now() },
+                { id: 2, name: 'Moonlight', emoji: '🌙', created: Date.now() - 86400000 },
+                { id: 3, name: 'Ocean Wave', emoji: '🌊', created: Date.now() - 172800000 }
+            ];
+
+            localStorage.setItem('charm_designs', JSON.stringify(demoDesigns));
+        }
+
+        if (!localStorage.getItem('charm_orders')) {
+
+            const demoOrders = [
+                { id: 'ORD-001', status: 'active', items: 2, total: 45, date: '2026-05-15' },
+                { id: 'ORD-002', status: 'active', items: 1, total: 78, date: '2026-05-10' },
+                { id: 'ORD-003', status: 'completed', items: 3, total: 32, date: '2026-05-01' }
+            ];
+
+            localStorage.setItem('charm_orders', JSON.stringify(demoOrders));
+        }
+    }
+
+    // ===============================
+    // UPDATE KPIs
+    // ===============================
+
+    function updateKPIs() {
+
+        const designs = JSON.parse(localStorage.getItem('charm_designs') || '[]');
+
+        const orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
+
+        const activeOrders = orders.filter(o => o.status === 'active').length;
+
+        document.querySelector('.stat-card:nth-child(1) .stat-value').textContent = designs.length;
+
+        document.querySelector('.stat-card:nth-child(2) .stat-value').textContent = activeOrders;
+
+        document.querySelector('.stat-card:nth-child(3) .stat-value').textContent = designs.length;
+    }
+
+    // ===============================
+    // LOAD DESIGNS
+    // ===============================
+
+    function loadDesigns(searchTerm = '') {
+
+        const designs = JSON.parse(localStorage.getItem('charm_designs') || '[]');
+
+        const container = document.querySelector('.designs-grid');
+
+        const createCard = container.querySelector('.create-card');
+
+        // Remove old cards
+        const existingCards = container.querySelectorAll('.design-card');
+
+        existingCards.forEach(card => card.remove());
+
+        // Filter designs
+        const filteredDesigns = designs.filter(design =>
+            design.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        // Add cards
+        filteredDesigns.forEach(design => {
+
+            const card = document.createElement('a');
+
+            card.className = 'design-card';
+
+            card.href = 'design.html?design=' + design.id;
+
+            card.style.textDecoration = 'none';
+            card.style.color = 'inherit';
+            card.style.cursor = 'pointer';
+
+            card.innerHTML = `
+                <div class="design-preview">
+                    <div class="design-placeholder">
+                        ${design.emoji || '✨'}
+                    </div>
+                </div>
+
+                <div class="design-info">
+                    <div class="design-name">
+                        ${design.name}
+                    </div>
+                </div>
+            `;
+
+            container.insertBefore(card, createCard);
+        });
+    }
+
+    // ===============================
+    // SEARCH
+    // ===============================
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const searchInput = document.getElementById("searchInput");
+
+        if (searchInput) {
+
+            searchInput.addEventListener("input", (e) => {
+
+                loadDesigns(e.target.value);
+
+            });
+
+        }
+
+    });
+
+    // ===============================
+    // INITIALIZE
+    // ===============================
+
+    initDemoData();
+
+    updateKPIs();
+
+    loadDesigns();
+
+    // ===============================
+    // STORAGE LISTENER
+    // ===============================
+
+    window.addEventListener('storage', (e) => {
+
+        if (
+            e.key === 'charm_designs' ||
+            e.key === 'charm_orders'
+        ) {
+
+            updateKPIs();
+
+            loadDesigns();
+        }
+
+    });
+
+</script>
+</html>

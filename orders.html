@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - Charm Studio</title>
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="orders.css">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">C</div>
+                <div class="logo-text">Charm</div>
+            </div>
+            <nav class="nav">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    My Dashboard
+                </a>
+                <a href="design.html" class="nav-item">
+                    <span class="nav-icon">🎨</span>
+                    Designer Studio
+                </a>
+                <a href="orders.html" class="nav-item active">
+                    <span class="nav-icon">📦</span>
+                    Orders
+                </a>
+            </nav>
+            <div class="sidebar-logout">
+                <button class="btn btn-ghost" style="width: 100%; justify-content: center;">
+                    <span>🚪</span> Logout
+                </button>
+            </div>
+        </aside>
+
+        <div class="main">
+            <header class="header">
+                <div class="search-bar">
+                    <span>🔍</span>
+                    <input type="text" placeholder="Search designs, orders...">
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-ghost"><span>👤</span> Profile</button>
+                    <button class="btn btn-ghost"><span>🚪</span> Logout</button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="orders-header">
+                    <h1 class="orders-title">My Orders</h1>
+                    <div class="tabs">
+                        <button class="tab active" onclick="filterOrders('all', this)">All Orders</button>
+                        <button class="tab" onclick="filterOrders('processing', this)">Processing</button>
+                        <button class="tab" onclick="filterOrders('shipped', this)">Shipped</button>
+                        <button class="tab" onclick="filterOrders('delivered', this)">Delivered</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Date</th>
+                                <th>Items</th>
+                                <th>Status</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersTable">
+                            <tr data-status="processing">
+                                <td><strong>#ORD-001</strong></td>
+                                <td>May 15, 2026</td>
+                                <td>Golden Star, Moonlight</td>
+                                <td>
+                                    <span class="status-badge status-processing">
+                                        <span class="status-dot"></span>
+                                        Processing
+                                    </span>
+                                </td>
+                                <td><strong>$45.00</strong></td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="action-btn" title="View">👁</button>
+                                        <button class="action-btn" title="Edit">✏</button>
+                                        <button class="action-btn" title="Delete">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-status="shipped">
+                                <td><strong>#ORD-002</strong></td>
+                                <td>May 10, 2026</td>
+                                <td>Sparkle Set x3</td>
+                                <td>
+                                    <span class="status-badge status-shipped">
+                                        <span class="status-dot"></span>
+                                        Shipped
+                                    </span>
+                                </td>
+                                <td><strong>$78.00</strong></td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="action-btn" title="View">👁</button>
+                                        <button class="action-btn" title="Edit">✏</button>
+                                        <button class="action-btn" title="Delete">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-status="delivered">
+                                <td><strong>#ORD-003</strong></td>
+                                <td>May 1, 2026</td>
+                                <td>Custom Chain</td>
+                                <td>
+                                    <span class="status-badge status-delivered">
+                                        <span class="status-dot"></span>
+                                        Delivered
+                                    </span>
+                                </td>
+                                <td><strong>$32.00</strong></td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="action-btn" title="View">👁</button>
+                                        <button class="action-btn" title="Edit">✏</button>
+                                        <button class="action-btn" title="Delete">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr data-status="processing">
+                                <td><strong>#ORD-004</strong></td>
+                                <td>May 18, 2026</td>
+                                <td>Gem Collection</td>
+                                <td>
+                                    <span class="status-badge status-processing">
+                                        <span class="status-dot"></span>
+                                        Processing
+                                    </span>
+                                </td>
+                                <td><strong>$120.00</strong></td>
+                                <td>
+                                    <div class="action-btns">
+                                        <button class="action-btn" title="View">👁</button>
+                                        <button class="action-btn" title="Edit">✏</button>
+                                        <button class="action-btn" title="Delete">🗑</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function filterOrders(status, tabBtn) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            tabBtn.classList.add('active');
+            document.querySelectorAll('#ordersTable tr').forEach(row => {
+                row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+<script>
+    // --- Initialize Demo Data (only if completely empty) ---
+    function initDemoData() {
+        const existing = localStorage.getItem('charm_orders');
+        if (!existing || existing === '[]') {
+            const demoOrders = [
+                { id: 'ORD-001', status: 'processing', items: 'Golden Star, Moonlight', total: 45.00, date: '2026-05-15', created: Date.now() - 864000000 },
+                { id: 'ORD-002', status: 'shipped', items: 'Sparkle Set x3', total: 78.00, date: '2026-05-10', created: Date.now() - 1209600000 },
+                { id: 'ORD-003', status: 'delivered', items: 'Custom Chain', total: 32.00, date: '2026-05-01', created: Date.now() - 1900800000 },
+                { id: 'ORD-004', status: 'processing', items: 'Gem Collection', total: 120.00, date: '2026-05-18', created: Date.now() - 432000000 }
+            ];
+            localStorage.setItem('charm_orders', JSON.stringify(demoOrders));
+        }
+    }
+
+    // --- Format Date ---
+    function formatDate(dateString) {
+        if (!dateString) return 'Just now';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString;
+        return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+
+    // --- Format Currency ---
+    function formatCurrency(amount) {
+        const num = parseFloat(amount) || 0;
+        return '$' + num.toFixed(2);
+    }
+
+    // --- Status Badge HTML ---
+    function getStatusBadge(status) {
+        // Map 'active' (from studio) to 'processing'
+        const displayStatus = status === 'active' ? 'processing' : status;
+        const labels = {
+            'processing': 'Processing',
+            'shipped': 'Shipped',
+            'delivered': 'Delivered'
+        };
+        return `
+            <span class="status-badge status-${displayStatus}">
+                <span class="status-dot"></span>
+                ${labels[displayStatus] || displayStatus}
+            </span>
+        `;
+    }
+
+    // --- Get Items Text ---
+    function getItemsText(order) {
+        if (order.items && typeof order.items === 'string') return order.items;
+        if (order.designName) return order.designName;
+        if (order.items && typeof order.items === 'number') return order.items + ' item(s)';
+        return 'Custom Design';
+    }
+
+    // --- Get Total ---
+    function getTotal(order) {
+        if (order.total) return parseFloat(order.total);
+        // Estimate: $15 per item
+        const count = order.items || 1;
+        return count * 15;
+    }
+
+    // --- Get Date ---
+    function getDate(order) {
+        if (order.date) return order.date;
+        if (order.created) {
+            const d = new Date(order.created);
+            return d.toISOString().split('T')[0];
+        }
+        return new Date().toISOString().split('T')[0];
+    }
+
+    // --- Render Orders Table ---
+    function renderOrders(filter = 'all') {
+        const orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
+        const tbody = document.getElementById('ordersTable');
+        tbody.innerHTML = '';
+
+        if (orders.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
+                        No orders yet. Create a design and place an order from the Designer Studio!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let visibleCount = 0;
+
+        orders.forEach(order => {
+            // Map 'active' to 'processing' for filtering/display
+            const displayStatus = order.status === 'active' ? 'processing' : order.status;
+            
+            if (filter !== 'all' && displayStatus !== filter) return;
+            visibleCount++;
+
+            const tr = document.createElement('tr');
+            tr.dataset.status = displayStatus;
+            tr.dataset.orderId = order.id;
+            tr.innerHTML = `
+                <td><strong>#${order.id}</strong></td>
+                <td>${formatDate(getDate(order))}</td>
+                <td>${getItemsText(order)}</td>
+                <td>${getStatusBadge(order.status)}</td>
+                <td><strong>${formatCurrency(getTotal(order))}</strong></td>
+                <td>
+                    <div class="action-btns">
+                        <button class="action-btn" title="View" onclick="viewOrder('${order.id}')">👁</button>
+                        <button class="action-btn" title="Delete" onclick="deleteOrder('${order.id}')">🗑</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        if (visibleCount === 0 && filter !== 'all') {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
+                        No ${filter} orders found.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // --- Filter Orders ---
+    function filterOrders(status, tabBtn) {
+        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+        tabBtn.classList.add('active');
+        renderOrders(status);
+    }
+
+    // --- View Order ---
+    function viewOrder(orderId) {
+        const orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
+        const order = orders.find(o => o.id === orderId);
+        if (!order) return;
+        
+        const displayStatus = order.status === 'active' ? 'Processing' : order.status;
+        alert(`Order #${order.id}\nStatus: ${displayStatus}\nItems: ${getItemsText(order)}\nTotal: ${formatCurrency(getTotal(order))}\nDate: ${formatDate(getDate(order))}`);
+    }
+
+    // --- Delete Order ---
+    function deleteOrder(orderId) {
+        if (!confirm('Are you sure you want to delete order #' + orderId + '?')) return;
+        
+        let orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
+        orders = orders.filter(o => o.id !== orderId);
+        localStorage.setItem('charm_orders', JSON.stringify(orders));
+        
+        // Re-render with current active filter
+        const activeTab = document.querySelector('.tab.active');
+        const tabText = activeTab.textContent.trim().toLowerCase();
+        const currentFilter = tabText.includes('all') ? 'all' : 
+                             tabText.includes('processing') ? 'processing' :
+                             tabText.includes('shipped') ? 'shipped' : 'delivered';
+        renderOrders(currentFilter);
+    }
+
+    // --- Listen for Storage Changes (from other tabs) ---
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'charm_orders') {
+            const activeTab = document.querySelector('.tab.active');
+            const tabText = activeTab.textContent.trim().toLowerCase();
+            const currentFilter = tabText.includes('all') ? 'all' : 
+                                 tabText.includes('processing') ? 'processing' :
+                                 tabText.includes('shipped') ? 'shipped' : 'delivered';
+            renderOrders(currentFilter);
+        }
+    });
+
+    // --- Initialize ---
+    initDemoData();
+    renderOrders('all');
+</script>
+</html>
