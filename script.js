@@ -1,8 +1,40 @@
-// Keycharm - LocalStorage Authentication System
+// ===============================
+// AUTH SYSTEM (ENHANCED)
+// ===============================
 
 const modalOverlay = document.getElementById('modalOverlay');
 const loginModal = document.getElementById('loginModal');
 const signupModal = document.getElementById('signupModal');
+
+// ===============================
+// CONFIG
+// ===============================
+
+const ADMIN_EMAIL = "admin@gmail.com";
+
+// ===============================
+// HELPERS
+// ===============================
+
+function getCurrentUser() {
+    return JSON.parse(localStorage.getItem("currentUser"));
+}
+
+function isAdmin(user) {
+    return user && user.email === ADMIN_EMAIL;
+}
+
+// ===============================
+// AUTO REDIRECT IF LOGGED IN
+// ===============================
+
+(function checkSession() {
+    const user = getCurrentUser();
+
+    if (user) {
+        window.location.href = "dashboard.html";
+    }
+})();
 
 // ===============================
 // MODAL FUNCTIONS
@@ -32,56 +64,47 @@ function showLogin(e) {
 }
 
 // ===============================
-// SIGN UP
+// SIGNUP
 // ===============================
 
 function handleSignup(e) {
     e.preventDefault();
 
-    const signupInputs = signupModal.querySelectorAll('input');
+    const inputs = signupModal.querySelectorAll('input');
 
-    const firstName = signupInputs[0].value.trim();
-    const lastName = signupInputs[1].value.trim();
-    const email = signupInputs[2].value.trim().toLowerCase();
-    const password = signupInputs[3].value;
-    const confirmPassword = signupInputs[4].value;
+    const firstName = inputs[0].value.trim();
+    const lastName = inputs[1].value.trim();
+    const email = inputs[2].value.trim().toLowerCase();
+    const password = inputs[3].value;
+    const confirmPassword = inputs[4].value;
 
-    // Check passwords
     if (password !== confirmPassword) {
         alert("Passwords do not match!");
         return;
     }
 
-    // Get existing users
     let users = JSON.parse(localStorage.getItem("users")) || [];
 
-    // Check if email already exists
-    const existingUser = users.find(user => user.email === email);
+    const exists = users.find(u => u.email === email);
 
-    if (existingUser) {
+    if (exists) {
         alert("Email already registered!");
         return;
     }
 
-    // Create new user object
     const newUser = {
         firstName,
         lastName,
         email,
-        password
+        password,
+        role: email === ADMIN_EMAIL ? "admin" : "user"
     };
 
-    // Save user
     users.push(newUser);
 
     localStorage.setItem("users", JSON.stringify(users));
-
-    // Auto login after signup
     localStorage.setItem("currentUser", JSON.stringify(newUser));
 
-    alert("Account created successfully!");
-
-    // Redirect to dashboard
     window.location.href = "dashboard.html";
 }
 
@@ -92,17 +115,15 @@ function handleSignup(e) {
 function handleLogin(e) {
     e.preventDefault();
 
-    const loginInputs = loginModal.querySelectorAll('input');
+    const inputs = loginModal.querySelectorAll('input');
 
-    const email = loginInputs[0].value.trim().toLowerCase();
-    const password = loginInputs[1].value;
+    const email = inputs[0].value.trim().toLowerCase();
+    const password = inputs[1].value;
 
-    // Get users
     let users = JSON.parse(localStorage.getItem("users")) || [];
 
-    // Find matching user
     const user = users.find(
-        user => user.email === email && user.password === password
+        u => u.email === email && u.password === password
     );
 
     if (!user) {
@@ -110,70 +131,52 @@ function handleLogin(e) {
         return;
     }
 
-    // Save logged in session
     localStorage.setItem("currentUser", JSON.stringify(user));
 
-    alert(`Welcome back, ${user.firstName}!`);
-
-    // Redirect to dashboard
     window.location.href = "dashboard.html";
 }
 
 // ===============================
-// LOGOUT
+// LOGOUT (optional if used here)
 // ===============================
 
 function logout() {
     localStorage.removeItem("currentUser");
-
-    alert("Logged out successfully!");
-
-    // Redirect back to homepage
     window.location.href = "index.html";
 }
 
 // ===============================
-// UPDATE UI
+// UI INIT
 // ===============================
 
 function updateUI() {
-
-    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-
-    // If user is logged in redirect to dashboard
-    if (currentUser) {
-        window.location.href = "dashboard.html";
-    }
+    const user = getCurrentUser();
 
     const ctaButton = document.querySelector('.cta-button');
 
-    // Homepage button always opens modal
     if (ctaButton) {
         ctaButton.onclick = openModal;
     }
+
+    // no redirect loop here anymore (important fix)
 }
 
 // ===============================
-// CLOSE MODAL EVENTS
+// EVENTS
 // ===============================
 
-modalOverlay.addEventListener('click', function(e) {
-    if (e.target === modalOverlay) {
-        closeModal();
-    }
+modalOverlay.addEventListener('click', function (e) {
+    if (e.target === modalOverlay) closeModal();
 });
 
-document.addEventListener('keydown', function(e) {
-    if (
-        e.key === 'Escape' &&
-        modalOverlay.classList.contains('active')
-    ) {
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
         closeModal();
     }
 });
 
 // ===============================
-// INITIAL LOAD
+// START
 // ===============================
 
 updateUI();

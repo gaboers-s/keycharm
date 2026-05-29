@@ -6,12 +6,87 @@
     <title>Dashboard - Charm Studio</title>
     <link rel="stylesheet" href="base.css">
     <link rel="stylesheet" href="dashboard.css">
+    <style>
+        /* Delete button on design cards */
+        .design-card {
+            position: relative;
+        }
+        .design-delete-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            background: #ef4444;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: transform 0.15s ease;
+        }
+        .design-delete-btn:hover {
+            transform: scale(1.1);
+            background: #dc2626;
+        }
+        .design-card:hover .design-delete-btn {
+            display: flex;
+        }
+
+        /* Delete confirmation modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 380px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .modal h3 { margin: 0 0 12px 0; font-size: 1.2rem; }
+        .modal p { margin: 0 0 20px 0; color: #666; font-size: 0.9rem; }
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .modal .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .modal .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .modal .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+<base target="_blank">
 </head>
 <body>
     <div class="app">
         <aside class="sidebar">
             <div class="logo">
-                <div class="logo-icon">C</div>
+                <div class="logo-icon">Key</div>
                 <div class="logo-text">Charm</div>
             </div>
             <nav class="nav">
@@ -28,11 +103,6 @@
                     Orders
                 </a>
             </nav>
-            <div class="sidebar-logout">
-                <button class="btn btn-ghost" style="width: 100%; justify-content: center;">
-                    <span>🚪</span> Logout
-                </button>
-            </div>
         </aside>
 
         <div class="main">
@@ -42,6 +112,7 @@
     </div>
 
     <div class="header-actions">
+        <span id="userDisplay" style="margin-right: 12px; font-weight: 500; color: var(--text-secondary);"></span>
         <button class="btn btn-ghost" id="logoutBtn">
             <span>🚪</span> Logout
         </button>
@@ -52,15 +123,15 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Total Charms</div>
-                        <div class="stat-value">128</div>
+                        <div class="stat-value" id="statTotalCharms">0</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Active Orders</div>
-                        <div class="stat-value">12</div>
+                        <div class="stat-value" id="statActiveOrders">0</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Saved Designs</div>
-                        <div class="stat-value">24</div>
+                        <div class="stat-value" id="statSavedDesigns">0</div>
                     </div>
                 </div>
 
@@ -70,19 +141,23 @@
                 </div>
 
                 <div class="designs-grid">
-                    <div class="design-card">
-                        <div class="design-preview"><div class="design-placeholder">🌟</div></div>
-                        <div class="design-info"><div class="design-name">Golden Star</div></div>
-                    </div>
-                    <div class="design-card">
-                        <div class="design-preview"><div class="design-placeholder">🌙</div></div>
-                        <div class="design-info"><div class="design-name">Moonlight</div></div>
-                    </div>
                     <a href="design.html" class="create-card">
                         <div class="create-icon">+</div>
                         <div class="create-text">Create New Design</div>
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Design Confirmation Modal -->
+    <div class="modal-overlay" id="deleteDesignModal">
+        <div class="modal">
+            <h3>🗑️ Delete Design</h3>
+            <p>Are you sure you want to delete this design? This action cannot be undone.</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteDesignModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDeleteDesign()">Delete</button>
             </div>
         </div>
     </div>
@@ -101,14 +176,25 @@
     }
 
     // ===============================
+    // PER-USER STORAGE KEYS
+    // ===============================
+
+    function getUserKey(baseKey) {
+        const user = JSON.parse(localStorage.getItem("currentUser"));
+        if (!user || !user.email) return baseKey;
+        return baseKey + "_" + user.email.replace(/[@.]/g, "_");
+    }
+
+    function getUserDesignsKey()   { return getUserKey('charm_designs'); }
+    function getUserOrdersKey()    { return getUserKey('charm_orders'); }
+
+    // ===============================
     // LOGOUT
     // ===============================
 
     function logout() {
         localStorage.removeItem("currentUser");
-
         alert("Logged out successfully!");
-
         window.location.href = "index.html";
     }
 
@@ -127,34 +213,38 @@
             sidebarLogoutBtn.addEventListener("click", logout);
         }
 
+        // Display current user
+        const userDisplay = document.getElementById("userDisplay");
+        if (userDisplay && currentUser) {
+            userDisplay.textContent = "👤 " + (currentUser.username || currentUser.email);
+        }
+
     });
 
     // ===============================
-    // INITIALIZE DEMO DATA
+    // INITIALIZE DEMO DATA (PER USER)
     // ===============================
 
     function initDemoData() {
+        const designsKey = getUserDesignsKey();
+        const ordersKey  = getUserOrdersKey();
 
-        if (!localStorage.getItem('charm_designs')) {
-
+        if (!localStorage.getItem(designsKey)) {
             const demoDesigns = [
                 { id: 1, name: 'Golden Star', emoji: '🌟', created: Date.now() },
                 { id: 2, name: 'Moonlight', emoji: '🌙', created: Date.now() - 86400000 },
                 { id: 3, name: 'Ocean Wave', emoji: '🌊', created: Date.now() - 172800000 }
             ];
-
-            localStorage.setItem('charm_designs', JSON.stringify(demoDesigns));
+            localStorage.setItem(designsKey, JSON.stringify(demoDesigns));
         }
 
-        if (!localStorage.getItem('charm_orders')) {
-
+        if (!localStorage.getItem(ordersKey)) {
             const demoOrders = [
                 { id: 'ORD-001', status: 'active', items: 2, total: 45, date: '2026-05-15' },
                 { id: 'ORD-002', status: 'active', items: 1, total: 78, date: '2026-05-10' },
                 { id: 'ORD-003', status: 'completed', items: 3, total: 32, date: '2026-05-01' }
             ];
-
-            localStorage.setItem('charm_orders', JSON.stringify(demoOrders));
+            localStorage.setItem(ordersKey, JSON.stringify(demoOrders));
         }
     }
 
@@ -163,18 +253,45 @@
     // ===============================
 
     function updateKPIs() {
-
-        const designs = JSON.parse(localStorage.getItem('charm_designs') || '[]');
-
-        const orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
-
+        const designs = JSON.parse(localStorage.getItem(getUserDesignsKey()) || '[]');
+        const orders  = JSON.parse(localStorage.getItem(getUserOrdersKey())  || '[]');
         const activeOrders = orders.filter(o => o.status === 'active').length;
 
-        document.querySelector('.stat-card:nth-child(1) .stat-value').textContent = designs.length;
+        const statTotalCharms = document.getElementById('statTotalCharms');
+        const statActiveOrders = document.getElementById('statActiveOrders');
+        const statSavedDesigns = document.getElementById('statSavedDesigns');
 
-        document.querySelector('.stat-card:nth-child(2) .stat-value').textContent = activeOrders;
+        if (statTotalCharms) statTotalCharms.textContent = designs.length;
+        if (statActiveOrders) statActiveOrders.textContent = activeOrders;
+        if (statSavedDesigns) statSavedDesigns.textContent = designs.length;
+    }
 
-        document.querySelector('.stat-card:nth-child(3) .stat-value').textContent = designs.length;
+    // ===============================
+    // DELETE DESIGN
+    // ===============================
+    let designToDelete = null;
+
+    function openDeleteDesignModal(designId) {
+        designToDelete = designId;
+        document.getElementById('deleteDesignModal').classList.add('active');
+    }
+
+    function closeDeleteDesignModal() {
+        document.getElementById('deleteDesignModal').classList.remove('active');
+        designToDelete = null;
+    }
+
+    function confirmDeleteDesign() {
+        if (!designToDelete) return;
+
+        const designsKey = getUserDesignsKey();
+        let designs = JSON.parse(localStorage.getItem(designsKey) || '[]');
+        designs = designs.filter(d => String(d.id) !== String(designToDelete));
+        localStorage.setItem(designsKey, JSON.stringify(designs));
+
+        closeDeleteDesignModal();
+        updateKPIs();
+        loadDesigns(document.getElementById('searchInput')?.value || '');
     }
 
     // ===============================
@@ -182,16 +299,14 @@
     // ===============================
 
     function loadDesigns(searchTerm = '') {
-
-        const designs = JSON.parse(localStorage.getItem('charm_designs') || '[]');
-
+        const designs = JSON.parse(localStorage.getItem(getUserDesignsKey()) || '[]');
         const container = document.querySelector('.designs-grid');
+        if (!container) return;
 
         const createCard = container.querySelector('.create-card');
 
         // Remove old cards
         const existingCards = container.querySelectorAll('.design-card');
-
         existingCards.forEach(card => card.remove());
 
         // Filter designs
@@ -201,13 +316,9 @@
 
         // Add cards
         filteredDesigns.forEach(design => {
-
             const card = document.createElement('a');
-
             card.className = 'design-card';
-
             card.href = 'design.html?design=' + design.id;
-
             card.style.textDecoration = 'none';
             card.style.color = 'inherit';
             card.style.cursor = 'pointer';
@@ -218,14 +329,13 @@
                         ${design.emoji || '✨'}
                     </div>
                 </div>
-
                 <div class="design-info">
                     <div class="design-name">
                         ${design.name}
                     </div>
                 </div>
+                <span class="design-delete-btn" title="Delete design" onclick="event.preventDefault(); event.stopPropagation(); openDeleteDesignModal('${design.id}')">×</span>
             `;
-
             container.insertBefore(card, createCard);
         });
     }
@@ -235,47 +345,33 @@
     // ===============================
 
     document.addEventListener("DOMContentLoaded", () => {
-
         const searchInput = document.getElementById("searchInput");
-
         if (searchInput) {
-
             searchInput.addEventListener("input", (e) => {
-
                 loadDesigns(e.target.value);
-
             });
-
         }
-
     });
 
     // ===============================
     // INITIALIZE
     // ===============================
 
-    initDemoData();
-
-    updateKPIs();
-
-    loadDesigns();
+    document.addEventListener("DOMContentLoaded", () => {
+        initDemoData();
+        updateKPIs();
+        loadDesigns();
+    });
 
     // ===============================
     // STORAGE LISTENER
     // ===============================
 
     window.addEventListener('storage', (e) => {
-
-        if (
-            e.key === 'charm_designs' ||
-            e.key === 'charm_orders'
-        ) {
-
+        if (e.key === getUserDesignsKey() || e.key === getUserOrdersKey()) {
             updateKPIs();
-
             loadDesigns();
         }
-
     });
 
 </script>

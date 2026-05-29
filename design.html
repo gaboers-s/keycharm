@@ -6,6 +6,262 @@
     <title>Designer Studio - Charm Studio</title>
     <link rel="stylesheet" href="base.css">
     <link rel="stylesheet" href="studio.css">
+    <style>
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            padding: 28px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .modal h3 { margin: 0 0 16px 0; font-size: 1.2rem; }
+        .modal p { margin: 0 0 20px 0; color: #666; font-size: 0.9rem; }
+        .modal .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        .modal .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .modal .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        .modal .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .modal .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* GCash Payment Modal */
+        .gcash-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .gcash-logo .gc-icon {
+            width: 60px; height: 60px;
+            background: #0077c0;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .gcash-logo h2 {
+            margin: 10px 0 0 0;
+            color: #0077c0;
+            font-size: 1.3rem;
+        }
+        .payment-details {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        .payment-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+        .payment-row:last-child { border-bottom: none; }
+        .payment-row.total {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1e293b;
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 2px solid #e2e8f0;
+        }
+        .gcash-number {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        .gcash-number:focus { border-color: #0077c0; }
+
+        /* Receipt */
+        .receipt {
+            background: #fff;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+        }
+        .receipt h4 {
+            margin: 0 0 16px 0;
+            color: #10b981;
+            font-size: 1.2rem;
+        }
+        .receipt-id {
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #475569;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+        .receipt-items {
+            text-align: left;
+            margin: 16px 0;
+        }
+        .receipt-items li {
+            padding: 4px 0;
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+        .receipt-total {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 12px;
+        }
+
+        /* Delete button on canvas items - hidden by default, shown on hover or selection */
+        .canvas-item {
+            position: relative;
+        }
+        .delete-handle {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 22px;
+            height: 22px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 10;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .canvas-item:hover .delete-handle,
+        .canvas-item.selected .delete-handle {
+            display: flex;
+        }
+        .canvas-item.selected {
+            outline: 2px dashed #6366f1;
+            outline-offset: 4px;
+        }
+
+        /* Ratio Dropdown */
+        .ratio-dropdown-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        .ratio-select {
+            width: 100%;
+            padding: var(--space-md);
+            background: var(--color-bg);
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius-md);
+            font-weight: 600;
+            color: var(--color-text);
+            font-size: 14px;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .ratio-select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        /* Preview Panel with Border */
+        .preview-panel {
+            background: var(--color-white);
+            border: 2px solid var(--color-border);
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 24px;
+        }
+
+        /* Preview Canvas with visible border */
+        .preview-canvas {
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            background:
+                linear-gradient(45deg, #f8fafc 25%, transparent 25%),
+                linear-gradient(-45deg, #f8fafc 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #f8fafc 75%),
+                linear-gradient(-45deg, transparent 75%, #f8fafc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: var(--color-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        /* Ratio Indicator Badge */
+        .ratio-indicator {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.75);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            z-index: 5;
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+        }
+
+        /* Preview Placeholder */
+        .preview-placeholder {
+            color: var(--color-text-light);
+            font-size: 18px;
+            font-weight: 500;
+        }
+    </style>
+<base target="_blank">
 </head>
 <body>
     <div class="app">
@@ -19,7 +275,7 @@
                     <span class="nav-icon">📊</span>
                     My Dashboard
                 </a>
-                <a href="studio.html" class="nav-item active">
+                <a href="design.html" class="nav-item active">
                     <span class="nav-icon">🎨</span>
                     Designer Studio
                 </a>
@@ -29,7 +285,7 @@
                 </a>
             </nav>
             <div class="sidebar-logout">
-                <button class="btn btn-ghost" style="width: 100%; justify-content: center;">
+                <button class="btn btn-ghost" id="sidebarLogoutBtn" style="width: 100%; justify-content: center;">
                     <span>🚪</span> Logout
                 </button>
             </div>
@@ -42,8 +298,8 @@
                     <input type="text" placeholder="Search designs, orders...">
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-ghost"><span>👤</span> Profile</button>
-                    <button class="btn btn-ghost"><span>🚪</span> Logout</button>
+                    <span id="userDisplay" style="margin-right: 12px; font-weight: 500; color: var(--text-secondary);"></span>
+                    <button class="btn btn-ghost" id="logoutBtn"><span>🚪</span> Logout</button>
                 </div>
             </header>
 
@@ -51,19 +307,30 @@
                 <div class="studio-layout">
                     <div class="tools-panel">
                         <div class="panel-title">Design Tools</div>
-                        <button class="tool-btn"><span>📁</span> Upload File</button>
-                        <button class="tool-btn"><span>📐</span> Change Ratio</button>
+                        <button class="tool-btn" id="uploadBtn"><span>📁</span> Upload File</button>
+                        <div class="ratio-dropdown-wrapper">
+                            <select class="ratio-select" id="ratioSelect">
+                                <option value="1:1">📐 1:1 Square</option>
+                                <option value="4:5">📐 4:5 Portrait</option>
+                                <option value="9:16">📐 9:16 Story</option>
+                                <option value="16:9">📐 16:9 Wide</option>
+                                <option value="3:2">📐 3:2 Photo</option>
+                            </select>
+                        </div>
                         <div class="saved-elements">
                             <div class="saved-elements-title">Saved Elements</div>
-                            <div class="element-item">⭐ Star Charm</div>
-                            <div class="element-item">🌙 Moon Base</div>
-                            <div class="element-item">💎 Gem Accent</div>
-                            <div class="element-item">🔗 Chain Link</div>
-                            <div class="element-item">✨ Sparkle</div>
+                            <div class="element-item" draggable="true">⭐ Star Charm</div>
+                            <div class="element-item" draggable="true">🌙 Moon Base</div>
+                            <div class="element-item" draggable="true">💎 Gem Accent</div>
+                            <div class="element-item" draggable="true">🔗 Chain Link</div>
+                            <div class="element-item" draggable="true">✨ Sparkle</div>
                         </div>
+                        <button class="tool-btn" id="orderBtn" style="background: #facc15; color: #1f2937; font-weight: 600;"><span>🛒</span> Order</button>
+                        <button class="tool-btn" id="saveBtn" style="background: #3b82f6; color: white; font-weight: 600;"><span>💾</span> Save Design</button>
                     </div>
                     <div class="preview-panel">
-                        <div class="preview-canvas">
+                        <div class="preview-canvas" id="previewCanvas">
+                            <div class="ratio-indicator" id="ratioIndicator">1:1</div>
                             <div class="preview-placeholder">Preview Area</div>
                         </div>
                     </div>
@@ -71,554 +338,610 @@
             </div>
         </div>
     </div>
-</body>
-<script>
-    // --- State Management ---
-    let currentRatio = '1:1';
-    let droppedItems = [];
-    let currentDesignId = null;
-    let selectedItem = null;
-    let isResizing = false;
-    let isDragging = false;
-    let dragItem = null;
-    let resizeItem = null;
-    let dragStartX, dragStartY, dragInitialX, dragInitialY;
-    let resizeStartX, resizeStartY, resizeStartScale;
-    
-    const ratios = {
-        '1:1': { w: 300, h: 300, label: '1:1' },
-        '4:5': { w: 300, h: 375, label: '4:5' },
-        '9:16': { w: 225, h: 400, label: '9:16' },
-        '16:9': { w: 400, h: 225, label: '16:9' },
-        '3:2': { w: 360, h: 240, label: '3:2' }
-    };
 
-    // --- Initialize ---
-    document.addEventListener('DOMContentLoaded', () => {
-        checkForExistingDesign();
-        initDragDrop();
-        initUploadTool();
-        initRatioTool();
-        addOrderButton();
-        updateSaveButton();
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <h3>🗑️ Remove Element</h3>
+            <p>Are you sure you want to remove this element from your design?</p>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GCash Payment Modal -->
+    <div class="modal-overlay" id="paymentModal">
+        <div class="modal">
+            <div class="gcash-logo">
+                <div class="gc-icon">G</div>
+                <h2>GCash Payment</h2>
+            </div>
+            <div class="payment-details" id="paymentDetails">
+                <!-- Filled by JS -->
+            </div>
+            <input type="text" class="gcash-number" id="gcashNumber" placeholder="Enter GCash number (e.g., 09171234567)">
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="processPayment()">Pay with GCash</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div class="modal-overlay" id="receiptModal">
+        <div class="modal">
+            <div class="receipt" id="receiptContent">
+                <!-- Filled by JS -->
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeReceiptModal()">Close</button>
+                <button class="btn btn-primary" onclick="downloadReceipt()">📥 Download</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ===============================
+// AUTH CONFIG
+// ===============================
+const ADMIN_EMAIL = "admin@gmail.com";
+
+// ===============================
+// AUTH HELPERS
+// ===============================
+function getCurrentUser() {
+    return JSON.parse(localStorage.getItem("currentUser"));
+}
+
+function isAdmin(user) {
+    return user && user.email === ADMIN_EMAIL;
+}
+
+// ===============================
+// PER-USER STORAGE KEYS
+// ===============================
+function getUserKey(baseKey) {
+    const user = getCurrentUser();
+    if (!user || !user.email) return baseKey;
+    return baseKey + "_" + user.email.replace(/[@.]/g, "_");
+}
+function getUserDesignsKey() { return getUserKey('charm_designs'); }
+function getUserOrdersKey()   { return getUserKey('charm_orders'); }
+
+// ===============================
+// AUTH GUARD
+// ===============================
+const currentUser = getCurrentUser();
+if (!currentUser) {
+    window.location.href = "index.html";
+}
+
+// Display current user
+document.addEventListener("DOMContentLoaded", () => {
+    const userDisplay = document.getElementById("userDisplay");
+    if (userDisplay && currentUser) {
+        userDisplay.textContent = "👤 " + (currentUser.username || currentUser.email);
+    }
+});
+
+// ===============================
+// LOGOUT
+// ===============================
+function logout() {
+    localStorage.removeItem("currentUser");
+    window.location.href = "index.html";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const logoutBtn = document.getElementById("logoutBtn");
+    const sidebarLogoutBtn = document.getElementById("sidebarLogoutBtn");
+    if (logoutBtn) logoutBtn.addEventListener("click", logout);
+    if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener("click", logout);
+
+    const saveBtn = document.getElementById("saveBtn");
+    if (saveBtn) saveBtn.addEventListener("click", saveDesign);
+
+    const orderBtn = document.getElementById("orderBtn");
+    if (orderBtn) orderBtn.addEventListener("click", openPaymentModal);
+
+    const ratioSelect = document.getElementById("ratioSelect");
+    if (ratioSelect) ratioSelect.addEventListener("change", (e) => {
+        currentRatio = e.target.value;
         renderCanvas();
-        setupGlobalEvents();
     });
 
-    // --- Global Mouse Events (drag + resize tracking) ---
-    function setupGlobalEvents() {
-        document.addEventListener('mousemove', (e) => {
-            if (isDragging && dragItem) {
-                e.preventDefault();
-                const dx = e.clientX - dragStartX;
-                const dy = e.clientY - dragStartY;
-                
-                const canvas = document.querySelector('.preview-canvas');
-                const rect = canvas.getBoundingClientRect();
-                
-                let newX = dragInitialX + dx;
-                let newY = dragInitialY + dy;
-                
-                newX = Math.max(30, Math.min(newX, rect.width - 30));
-                newY = Math.max(30, Math.min(newY, rect.height - 30));
-                
-                dragItem.x = newX;
-                dragItem.y = newY;
-                
-                const el = document.querySelector(`[data-item-id="${dragItem.id}"]`);
-                if (el) {
-                    el.style.left = newX + 'px';
-                    el.style.top = newY + 'px';
-                }
-            }
-            
-            if (isResizing && resizeItem) {
-                e.preventDefault();
-                const dx = e.clientX - resizeStartX;
-                const dy = e.clientY - resizeStartY;
-                const delta = (dx + dy) / 150;
-                
-                let newScale = resizeStartScale + delta;
-                newScale = Math.max(0.2, Math.min(newScale, 4));
-                
-                resizeItem.scale = newScale;
-                renderCanvas();
-            }
-        });
+    const uploadBtn = document.getElementById("uploadBtn");
+    if (uploadBtn) uploadBtn.addEventListener("click", triggerUpload);
+});
 
-        document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                dragItem = null;
-            }
-            if (isResizing) {
-                isResizing = false;
-                resizeItem = null;
-            }
-        });
-    }
+// ===============================
+// STATE
+// ===============================
+let currentRatio = '1:1';
+let droppedItems = [];
+let currentDesignId = null;
+let selectedItem = null;
+let itemToDelete = null;
+let isResizing = false;
+let isDragging = false;
+let dragItem = null;
+let resizeItem = null;
+let dragStartX, dragStartY, dragInitialX, dragInitialY;
+let resizeStartX, resizeStartScale;
 
-    // --- Check if editing existing design from URL ---
-    function checkForExistingDesign() {
-        const params = new URLSearchParams(window.location.search);
-        const designId = params.get('design');
-        
-        if (designId) {
-            const designs = JSON.parse(localStorage.getItem('charm_designs') || '[]');
-            const design = designs.find(d => String(d.id) === designId);
-            
-            if (design && design.state) {
-                currentDesignId = design.id;
-                currentRatio = design.state.ratio || '1:1';
-                droppedItems = JSON.parse(JSON.stringify(design.state.items || []));
+const ratios = {
+    '1:1': { w: 300, h: 300, label: '1:1' },
+    '4:5': { w: 300, h: 375, label: '4:5' },
+    '9:16': { w: 225, h: 400, label: '9:16' },
+    '16:9': { w: 400, h: 225, label: '16:9' },
+    '3:2': { w: 360, h: 240, label: '3:2' }
+};
+const ratioKeys = Object.keys(ratios);
+
+// ===============================
+// INIT
+// ===============================
+document.addEventListener('DOMContentLoaded', () => {
+    checkForExistingDesign();
+    initDragDrop();
+    initCanvasInteractions();
+    renderCanvas();
+});
+
+// ===============================
+// CHECK EXISTING DESIGN
+// ===============================
+function checkForExistingDesign() {
+    const params = new URLSearchParams(window.location.search);
+    const designId = params.get('design');
+
+    if (designId) {
+        const designs = JSON.parse(localStorage.getItem(getUserDesignsKey()) || '[]');
+        const design = designs.find(d => String(d.id) === designId);
+
+        if (design && design.state) {
+            // Check ownership
+            if (!isAdmin(currentUser) && design.userEmail !== currentUser.email) {
+                alert("You don't have permission to edit this design.");
+                window.location.href = "dashboard.html";
+                return;
             }
+            currentDesignId = design.id;
+            currentRatio = design.state.ratio || '1:1';
+            droppedItems = JSON.parse(JSON.stringify(design.state.items || []));
+            // Sync dropdown
+            const ratioSelect = document.getElementById('ratioSelect');
+            if (ratioSelect) ratioSelect.value = currentRatio;
         }
     }
+}
 
-    // --- Drag & Drop from Saved Elements ---
-    function initDragDrop() {
-        const elements = document.querySelectorAll('.element-item');
-        const canvas = document.querySelector('.preview-canvas');
+// ===============================
+// DRAG & DROP
+// ===============================
+function initDragDrop() {
+    const elements = document.querySelectorAll('.element-item');
+    const canvas = document.getElementById('previewCanvas');
 
-        elements.forEach(el => {
-            el.draggable = true;
-            el.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', el.textContent.trim());
-                el.style.opacity = '0.5';
-            });
-            el.addEventListener('dragend', () => {
-                el.style.opacity = '1';
-            });
+    elements.forEach(el => {
+        el.draggable = true;
+        el.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', el.textContent.trim());
         });
+    });
 
-        canvas.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            canvas.style.borderColor = '#facc15';
-        });
+    canvas.addEventListener('dragover', (e) => e.preventDefault());
 
-        canvas.addEventListener('dragleave', () => {
-            canvas.style.borderColor = '#e5e7eb';
-        });
+    canvas.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const text = e.dataTransfer.getData('text/plain');
+        if (!text) return;
 
-        canvas.addEventListener('drop', (e) => {
-            e.preventDefault();
-            canvas.style.borderColor = '#e5e7eb';
-            
-            const text = e.dataTransfer.getData('text/plain');
-            if (!text) return;
+        const rect = canvas.getBoundingClientRect();
+        const item = {
+            id: Date.now(),
+            type: 'emoji',
+            emoji: text.split(' ')[0],
+            name: text,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top,
+            scale: 1
+        };
 
-            const emojiMatch = text.match(/^(\p{Emoji})/u);
-            const emoji = emojiMatch ? emojiMatch[1] : '✨';
-            const name = text.replace(/^\p{Emoji}\s*/u, '').trim();
+        droppedItems.push(item);
+        selectedItem = item;
+        renderCanvas();
+    });
+}
 
+// ===============================
+// UPLOAD FILE (Images)
+// ===============================
+function triggerUpload() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const canvas = document.getElementById('previewCanvas');
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
             const item = {
                 id: Date.now(),
-                type: 'emoji',
-                emoji: emoji,
-                name: name,
-                x: Math.max(30, Math.min(x, rect.width - 30)),
-                y: Math.max(30, Math.min(y, rect.height - 30)),
+                type: 'image',
+                src: event.target.result,
+                name: file.name,
+                x: rect.width / 2 - 40,
+                y: rect.height / 2 - 40,
                 scale: 1
             };
-
             droppedItems.push(item);
             selectedItem = item;
             renderCanvas();
-        });
-    }
+        };
+        reader.readAsDataURL(file);
+    };
+    input.click();
+}
 
-    // --- Upload Tool (first button) ---
-    function initUploadTool() {
-        const uploadBtn = document.querySelectorAll('.tool-btn')[0];
-        
-        uploadBtn.addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'image/*';
-            input.style.display = 'none';
-            
-            input.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
+// ===============================
+// CANVAS INTERACTIONS (DRAG/RESIZE/DELETE)
+// ===============================
+function initCanvasInteractions() {
+    const canvas = document.getElementById('previewCanvas');
 
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const ratio = ratios[currentRatio];
-                        const maxW = ratio.w * 0.8;
-                        const maxH = ratio.h * 0.8;
-                        let scale = Math.min(maxW / img.width, maxH / img.height, 1);
-
-                        const item = {
-                            id: Date.now(),
-                            type: 'image',
-                            src: event.target.result,
-                            width: img.width * scale,
-                            height: img.height * scale,
-                            naturalWidth: img.width,
-                            naturalHeight: img.height,
-                            x: ratio.w / 2,
-                            y: ratio.h / 2,
-                            scale: 1
-                        };
-                        
-                        droppedItems.push(item);
-                        selectedItem = item;
-                        renderCanvas();
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-            
-            input.click();
-        });
-    }
-
-    // --- Ratio Tool (second button) ---
-    function initRatioTool() {
-        const ratioBtn = document.querySelectorAll('.tool-btn')[1];
-        
-        ratioBtn.addEventListener('click', () => {
-            const existing = document.querySelector('.ratio-picker');
-            if (existing) {
-                existing.remove();
-                return;
-            }
-
-            const picker = document.createElement('div');
-            picker.className = 'ratio-picker';
-            picker.style.cssText = `
-                position: absolute;
-                top: 140px;
-                left: 20px;
-                background: white;
-                border: 1px solid #e5e7eb;
-                border-radius: 12px;
-                padding: 8px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-                z-index: 100;
-                min-width: 140px;
-            `;
-
-            Object.entries(ratios).forEach(([key, val]) => {
-                const option = document.createElement('div');
-                const isActive = key === currentRatio;
-                option.style.cssText = `
-                    padding: 10px 12px;
-                    cursor: pointer;
-                    border-radius: 8px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    transition: background 0.2s;
-                    background: ${isActive ? '#fef9c3' : 'transparent'};
-                    color: ${isActive ? '#854d0e' : 'inherit'};
-                `;
-
-                option.innerHTML = `
-                    <span style="display:inline-block;width:18px;height:14px;border:2px solid ${isActive ? '#facc15' : '#d1d5db'};border-radius:3px;position:relative;flex-shrink:0;">
-                        ${isActive ? '<span style="position:absolute;inset:2px;background:#facc15;border-radius:1px;"></span>' : ''}
-                    </span>
-                    ${val.label}
-                `;
-
-                option.addEventListener('mouseenter', () => {
-                    if (!isActive) option.style.background = '#f9fafb';
-                });
-                option.addEventListener('mouseleave', () => {
-                    if (!isActive) option.style.background = 'transparent';
-                });
-                
-                option.addEventListener('click', () => {
-                    currentRatio = key;
-                    renderCanvas();
-                    picker.remove();
-                });
-
-                picker.appendChild(option);
-            });
-
-            document.querySelector('.tools-panel').appendChild(picker);
-
-            setTimeout(() => {
-                document.addEventListener('click', function close(e) {
-                    if (!picker.contains(e.target) && e.target !== ratioBtn) {
-                        picker.remove();
-                        document.removeEventListener('click', close);
-                    }
-                });
-            }, 10);
-        });
-    }
-
-    // --- Add Order Button ---
-    function addOrderButton() {
-        const toolsPanel = document.querySelector('.tools-panel');
-        
-        const orderBtn = document.createElement('button');
-        orderBtn.className = 'tool-btn';
-        orderBtn.innerHTML = '<span>🛒</span> Order';
-        orderBtn.style.background = '#facc15';
-        orderBtn.style.color = '#422006';
-        orderBtn.style.fontWeight = '600';
-        orderBtn.style.marginTop = '8px';
-        
-        orderBtn.addEventListener('click', () => {
-            if (droppedItems.length === 0) {
-                alert('Add some elements to your design first!');
-                return;
-            }
-            
-            const orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
-            const orderNum = orders.length + 1;
-            const order = {
-                id: 'ORD-' + String(orderNum).padStart(3, '0'),
-                status: 'active',
-                items: droppedItems.length,
-                designName: currentDesignId ? findDesignName(currentDesignId) : 'New Design ' + orderNum,
-                total: droppedItems.length * 15,
-                date: new Date().toISOString().split('T')[0],
-                created: Date.now()
-            };
-            
-            orders.push(order);
-            localStorage.setItem('charm_orders', JSON.stringify(orders));
-            alert('Order placed! ID: ' + order.id);
-        });
-        
-        toolsPanel.appendChild(orderBtn);
-    }
-
-    function findDesignName(id) {
-        const designs = JSON.parse(localStorage.getItem('charm_designs') || '[]');
-        const d = designs.find(x => x.id == id);
-        return d ? d.name : 'Design';
-    }
-
-    // --- Update Save Button Text ---
-    function updateSaveButton() {
-        const toolsPanel = document.querySelector('.tools-panel');
-        let saveBtn = toolsPanel.querySelector('.btn-save-design');
-        
-        if (!saveBtn) {
-            saveBtn = document.createElement('button');
-            saveBtn.className = 'tool-btn btn-save-design';
-            saveBtn.style.marginTop = 'auto';
-            saveBtn.style.background = '#3b82f6';
-            saveBtn.style.color = 'white';
-            saveBtn.addEventListener('click', saveDesign);
-            toolsPanel.appendChild(saveBtn);
-        }
-        
-        saveBtn.innerHTML = currentDesignId ? '<span>💾</span> Update Design' : '<span>💾</span> Save Design';
-    }
-
-    // --- Save / Update Design ---
-    function saveDesign() {
-        if (droppedItems.length === 0) {
-            alert('Canvas is empty! Add elements first.');
+    canvas.addEventListener('mousedown', (e) => {
+        // Check if clicking delete handle
+        const deleteHandle = e.target.closest('.delete-handle');
+        if (deleteHandle) {
+            e.stopPropagation();
+            const itemId = parseInt(deleteHandle.dataset.deleteId);
+            itemToDelete = droppedItems.find(i => i.id === itemId);
+            openDeleteModal();
             return;
         }
-        
-        const name = prompt('Design name:', currentDesignId ? findDesignName(currentDesignId) : '') || 'Untitled';
-        const designs = JSON.parse(localStorage.getItem('charm_designs') || '[]');
-        
-        const designData = {
-            id: currentDesignId || Date.now(),
-            name: name,
-            emoji: droppedItems.find(i => i.type === 'emoji')?.emoji || '🎨',
-            created: currentDesignId ? (designs.find(d => d.id == currentDesignId)?.created || Date.now()) : Date.now(),
-            state: {
-                ratio: currentRatio,
-                items: JSON.parse(JSON.stringify(droppedItems))
+
+        const itemEl = e.target.closest('[data-item-id]');
+        if (!itemEl) {
+            selectedItem = null;
+            renderCanvas();
+            return;
+        }
+
+        const itemId = parseInt(itemEl.dataset.itemId);
+        const item = droppedItems.find(i => i.id === itemId);
+        if (!item) return;
+
+        selectedItem = item;
+
+        // Right side resize handle check - invisible, just detects proximity to right edge
+        const rect = itemEl.getBoundingClientRect();
+        const isRightEdge = e.clientX > rect.right - 10;
+
+        if (isRightEdge) {
+            isResizing = true;
+            resizeItem = item;
+            resizeStartX = e.clientX;
+            resizeStartScale = item.scale || 1;
+        } else {
+            isDragging = true;
+            dragItem = item;
+            dragStartX = e.clientX;
+            dragStartY = e.clientY;
+            dragInitialX = item.x;
+            dragInitialY = item.y;
+        }
+        renderCanvas();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        const canvas = document.getElementById('previewCanvas');
+        const rect = canvas.getBoundingClientRect();
+
+        if (isDragging && dragItem) {
+            const dx = e.clientX - dragStartX;
+            const dy = e.clientY - dragStartY;
+
+            let newX = dragInitialX + dx;
+            let newY = dragInitialY + dy;
+
+            newX = Math.max(0, Math.min(newX, rect.width - 20));
+            newY = Math.max(0, Math.min(newY, rect.height - 20));
+
+            dragItem.x = newX;
+            dragItem.y = newY;
+
+            const el = document.querySelector(`[data-item-id="${dragItem.id}"]`);
+            if (el) {
+                el.style.left = newX + 'px';
+                el.style.top = newY + 'px';
             }
-        };
-        
-        if (currentDesignId) {
-            const idx = designs.findIndex(d => d.id == currentDesignId);
-            if (idx >= 0) designs[idx] = designData;
-            else designs.push(designData);
+        }
+
+        if (isResizing && resizeItem) {
+            const dx = e.clientX - resizeStartX;
+            const delta = dx / 100;
+            let newScale = resizeStartScale + delta;
+            newScale = Math.max(0.3, Math.min(newScale, 5));
+            resizeItem.scale = newScale;
+            renderCanvas();
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        dragItem = null;
+        isResizing = false;
+        resizeItem = null;
+    });
+
+    // Keyboard delete
+    document.addEventListener('keydown', (e) => {
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedItem) {
+            itemToDelete = selectedItem;
+            openDeleteModal();
+        }
+    });
+}
+
+// ===============================
+// DELETE MODAL
+// ===============================
+function openDeleteModal() {
+    document.getElementById('deleteModal').classList.add('active');
+}
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('active');
+    itemToDelete = null;
+}
+function confirmDelete() {
+    if (itemToDelete) {
+        droppedItems = droppedItems.filter(i => i.id !== itemToDelete.id);
+        if (selectedItem && selectedItem.id === itemToDelete.id) {
+            selectedItem = null;
+        }
+        renderCanvas();
+    }
+    closeDeleteModal();
+}
+
+// ===============================
+// SAVE DESIGN (PER-USER)
+// ===============================
+function saveDesign() {
+    const designsKey = getUserDesignsKey();
+    const designs = JSON.parse(localStorage.getItem(designsKey) || '[]');
+    const name = prompt("Design name:") || "Untitled";
+
+    const designData = {
+        id: currentDesignId || Date.now(),
+        userEmail: currentUser.email,
+        name,
+        emoji: droppedItems[0]?.emoji || '🎨',
+        created: Date.now(),
+        state: {
+            ratio: currentRatio,
+            items: JSON.parse(JSON.stringify(droppedItems))
+        }
+    };
+
+    if (currentDesignId) {
+        const index = designs.findIndex(d => String(d.id) === String(currentDesignId));
+        if (index >= 0) {
+            const existing = designs[index];
+            if (!isAdmin(currentUser) && existing.userEmail !== currentUser.email) {
+                alert("You don't have permission to edit this design.");
+                return;
+            }
+            designs[index] = designData;
         } else {
             designs.push(designData);
             currentDesignId = designData.id;
         }
-        
-        localStorage.setItem('charm_designs', JSON.stringify(designs));
-        updateSaveButton();
-        alert(currentDesignId ? 'Design updated!' : 'Design saved! Check your Dashboard.');
+    } else {
+        designs.push(designData);
+        currentDesignId = designData.id;
     }
 
-    // --- Render Canvas ---
-    function renderCanvas() {
-        const canvas = document.querySelector('.preview-canvas');
-        const ratio = ratios[currentRatio];
-        
-        canvas.style.width = ratio.w + 'px';
-        canvas.style.height = ratio.h + 'px';
-        canvas.style.position = 'relative';
-        canvas.style.overflow = 'hidden';
-        canvas.style.background = '#fafaf9';
-        canvas.style.border = '2px dashed #e5e7eb';
-        canvas.style.borderRadius = '12px';
-        canvas.style.margin = '0 auto';
-        canvas.style.display = 'flex';
-        canvas.style.alignItems = 'center';
-        canvas.style.justifyContent = 'center';
+    localStorage.setItem(designsKey, JSON.stringify(designs));
+    alert("Design saved!");
+}
 
-        // Clear canvas by removing children
-        while (canvas.firstChild) {
-            canvas.removeChild(canvas.firstChild);
-        }
-        
-        // Ratio badge
-        const badge = document.createElement('div');
-        badge.textContent = ratio.label;
-        badge.style.cssText = `
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 700;
-            z-index: 10;
-            font-family: monospace;
-            pointer-events: none;
-        `;
-        canvas.appendChild(badge);
+// ===============================
+// GCASH PAYMENT
+// ===============================
+let currentOrderData = null;
 
-        // Click canvas to deselect
-        canvas.addEventListener('click', (e) => {
-            if (e.target === canvas || e.target.classList.contains('preview-placeholder')) {
-                selectedItem = null;
-                renderCanvas();
+function openPaymentModal() {
+    if (droppedItems.length === 0) {
+        alert("Please add items to your design first.");
+        return;
+    }
+
+    const total = droppedItems.length * 15;
+    const itemsList = droppedItems.map(i => i.name || i.emoji).join(', ');
+
+    currentOrderData = {
+        items: droppedItems.length,
+        designName: itemsList,
+        total: total,
+        date: new Date().toISOString().split('T')[0]
+    };
+
+    const detailsHtml = `
+        <div class="payment-row"><span>Items</span><span>${droppedItems.length} charms</span></div>
+        <div class="payment-row"><span>Design</span><span style="max-width: 200px; text-align: right; overflow: hidden; text-overflow: ellipsis;">${itemsList}</span></div>
+        <div class="payment-row"><span>Unit Price</span><span>₱15.00</span></div>
+        <div class="payment-row total"><span>Total</span><span>₱${total.toFixed(2)}</span></div>
+    `;
+    document.getElementById('paymentDetails').innerHTML = detailsHtml;
+    document.getElementById('paymentModal').classList.add('active');
+}
+
+function closePaymentModal() {
+    document.getElementById('paymentModal').classList.remove('active');
+    document.getElementById('gcashNumber').value = '';
+}
+
+function processPayment() {
+    const gcashNumber = document.getElementById('gcashNumber').value.trim();
+    if (!gcashNumber || gcashNumber.length < 11) {
+        alert("Please enter a valid GCash number.");
+        return;
+    }
+
+    // Simulate processing
+    const btn = document.querySelector('#paymentModal .btn-primary');
+    btn.textContent = 'Processing...';
+    btn.disabled = true;
+
+    setTimeout(() => {
+        // Save order per-user
+        const ordersKey = getUserOrdersKey();
+        const orders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+        const orderId = 'ORD-' + String(Date.now()).slice(-6);
+
+        const order = {
+            id: orderId,
+            userEmail: currentUser.email,
+            status: 'active',
+            items: currentOrderData.items,
+            designName: currentOrderData.designName,
+            total: currentOrderData.total,
+            date: currentOrderData.date,
+            gcashNumber: gcashNumber,
+            created: Date.now(),
+            designState: {
+                ratio: currentRatio,
+                items: JSON.parse(JSON.stringify(droppedItems))
             }
-        });
+        };
 
-        if (droppedItems.length === 0) {
-            const placeholder = document.createElement('div');
-            placeholder.className = 'preview-placeholder';
-            placeholder.style.cssText = `
-                color: #a1a1aa;
-                font-size: 14px;
-                text-align: center;
-                pointer-events: none;
-                line-height: 1.5;
-            `;
-            placeholder.innerHTML = 'Drag elements here<br><span style="font-size:12px;">or upload an image</span>';
-            canvas.appendChild(placeholder);
-        } else {
-            droppedItems.forEach(item => {
-                const wrapper = document.createElement('div');
-                wrapper.style.position = 'absolute';
-                wrapper.style.left = item.x + 'px';
-                wrapper.style.top = item.y + 'px';
-                wrapper.style.transform = 'translate(-50%, -50%)';
-                wrapper.style.zIndex = selectedItem && selectedItem.id === item.id ? '100' : '5';
-                wrapper.style.userSelect = 'none';
-                wrapper.dataset.itemId = item.id;
-                wrapper.style.cursor = 'move';
+        orders.push(order);
+        localStorage.setItem(ordersKey, JSON.stringify(orders));
 
-                // Selection outline
-                if (selectedItem && selectedItem.id === item.id) {
-                    wrapper.style.outline = '2px solid #3b82f6';
-                    wrapper.style.outlineOffset = '6px';
-                    wrapper.style.borderRadius = '4px';
-                }
+        btn.textContent = 'Pay with GCash';
+        btn.disabled = false;
+        closePaymentModal();
+        showReceipt(order);
+    }, 1500);
+}
 
-                if (item.type === 'image') {
-                    const scaledWidth = item.width * (item.scale || 1);
-                    const scaledHeight = item.height * (item.scale || 1);
-                    wrapper.innerHTML = `
-                        <img src="${item.src}" 
-                             style="width:${scaledWidth}px;height:${scaledHeight}px;object-fit:contain;border-radius:8px;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,0.08);display:block;" 
-                             draggable="false">
-                    `;
-                } else {
-                    const scale = item.scale || 1;
-                    wrapper.innerHTML = `
-                        <div style="font-size: ${56 * scale}px; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0,0,0,0.12));pointer-events:none;">${item.emoji}</div>
-                    `;
-                }
+// ===============================
+// RECEIPT
+// ===============================
+function showReceipt(order) {
+    const receiptHtml = `
+        <h4>✅ Payment Successful!</h4>
+        <div class="receipt-id">${order.id}</div>
+        <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 12px;">
+            ${new Date(order.created).toLocaleString()}
+        </div>
+        <div style="border-top: 1px dashed #e2e8f0; padding-top: 12px; margin-top: 12px;">
+            <div style="text-align: left; margin-bottom: 12px;">
+                <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 4px;">Billed to</div>
+                <div style="font-weight: 500; color: #1e293b;">${currentUser.username || currentUser.email}</div>
+                <div style="font-size: 0.85rem; color: #64748b;">GCash: ${order.gcashNumber}</div>
+            </div>
+            <ul class="receipt-items">
+                <li>🎨 ${order.designName}</li>
+                <li>📦 ${order.items} item(s) × ₱15.00</li>
+            </ul>
+            <div class="receipt-total">₱${order.total.toFixed(2)}</div>
+        </div>
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px dashed #e2e8f0; font-size: 0.8rem; color: #94a3b8;">
+            Thank you for your order!<br>
+            Charm Studio
+        </div>
+    `;
+    document.getElementById('receiptContent').innerHTML = receiptHtml;
+    document.getElementById('receiptModal').classList.add('active');
+}
 
-                // MOUSE DOWN ON ITEM BODY = DRAG (not resize)
-                wrapper.addEventListener('mousedown', (e) => {
-                    // If clicking resize handle, skip drag
-                    if (e.target.classList.contains('resize-handle')) return;
-                    
-                    e.stopPropagation();
-                    selectedItem = item;
-                    
-                    // Start drag
-                    isDragging = true;
-                    dragItem = item;
-                    dragStartX = e.clientX;
-                    dragStartY = e.clientY;
-                    dragInitialX = item.x;
-                    dragInitialY = item.y;
-                    
-                    wrapper.style.cursor = 'grabbing';
-                    renderCanvas();
-                });
+function closeReceiptModal() {
+    document.getElementById('receiptModal').classList.remove('active');
+}
 
-                // Right-click to remove
-                wrapper.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    droppedItems = droppedItems.filter(i => i.id !== item.id);
-                    if (selectedItem && selectedItem.id === item.id) selectedItem = null;
-                    renderCanvas();
-                });
-                
-                // Add resize handle if selected
-                if (selectedItem && selectedItem.id === item.id) {
-                    addResizeHandle(wrapper, item);
-                }
-                
-                canvas.appendChild(wrapper);
-            });
+function downloadReceipt() {
+    const orderId = document.querySelector('.receipt-id').textContent;
+    const content = document.getElementById('receiptContent').innerText;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `CharmStudio_Receipt_${orderId}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ===============================
+// RENDER CANVAS
+// ===============================
+function renderCanvas() {
+    const canvas = document.getElementById('previewCanvas');
+    const ratio = ratios[currentRatio];
+
+    canvas.style.width = ratio.w + 'px';
+    canvas.style.height = ratio.h + 'px';
+
+    // Update ratio indicator
+    const indicator = document.getElementById('ratioIndicator');
+    if (indicator) indicator.textContent = ratio.label;
+
+    // Clear canvas but keep indicator and placeholder logic
+    const existingItems = canvas.querySelectorAll('.canvas-item');
+    existingItems.forEach(el => el.remove());
+
+    const placeholder = canvas.querySelector('.preview-placeholder');
+    if (placeholder) placeholder.remove();
+
+    if (droppedItems.length === 0) {
+        const ph = document.createElement('div');
+        ph.className = 'preview-placeholder';
+        ph.textContent = 'Preview Area';
+        canvas.appendChild(ph);
+    }
+
+    droppedItems.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'canvas-item';
+        if (selectedItem && selectedItem.id === item.id) {
+            el.classList.add('selected');
         }
-    }
+        el.style.position = 'absolute';
+        el.style.left = item.x + 'px';
+        el.style.top = item.y + 'px';
+        el.style.cursor = 'move';
+        el.style.userSelect = 'none';
+        el.dataset.itemId = item.id;
 
-    // --- Add Resize Handle (CORNER ONLY) ---
-    function addResizeHandle(wrapper, item) {
-        const handle = document.createElement('div');
-        handle.className = 'resize-handle';
-        handle.style.cssText = `
-            position: absolute;
-            bottom: -14px;
-            right: -14px;
-            width: 24px;
-            height: 24px;
-            background: #3b82f6;
-            border: 3px solid white;
-            border-radius: 50%;
-            cursor: nwse-resize;
-            z-index: 200;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-        `;
+        if (item.type === 'image') {
+            const img = document.createElement('img');
+            img.src = item.src;
+            img.style.width = ((item.scale || 1) * 80) + 'px';
+            img.style.height = 'auto';
+            img.style.borderRadius = '8px';
+            img.style.pointerEvents = 'none';
+            el.appendChild(img);
+        } else {
+            el.style.fontSize = ((item.scale || 1) * 32) + 'px';
+            el.textContent = item.emoji;
+        }
 
-        handle.addEventListener('mousedown', (e) => {
-            e.stopPropagation(); // CRITICAL: prevents wrapper mousedown from firing
-            e.preventDefault();
-            
-            isResizing = true;
-            resizeItem = item;
-            resizeStartX = e.clientX;
-            resizeStartY = e.clientY;
-            resizeStartScale = item.scale || 1;
-        });
+        // Delete handle - hidden by default, shown on hover or selection
+        const deleteHandle = document.createElement('div');
+        deleteHandle.className = 'delete-handle';
+        deleteHandle.dataset.deleteId = item.id;
+        deleteHandle.innerHTML = '×';
+        deleteHandle.title = 'Click to remove';
+        el.appendChild(deleteHandle);
 
-        wrapper.appendChild(handle);
-    }
+        canvas.appendChild(el);
+    });
+}
 </script>
 </html>

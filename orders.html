@@ -6,6 +6,152 @@
     <title>Orders - Charm Studio</title>
     <link rel="stylesheet" href="base.css">
     <link rel="stylesheet" href="orders.css">
+    <style>
+        /* View Order Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        .modal-header {
+            padding: 24px 28px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-header h3 { margin: 0; font-size: 1.3rem; }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #9ca3af;
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close:hover { background: #f3f4f6; color: #374151; }
+        .modal-body { padding: 20px 28px 28px; }
+
+        /* Receipt inside modal */
+        .receipt-box {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .receipt-box h4 {
+            margin: 0 0 12px 0;
+            color: #10b981;
+            font-size: 1.1rem;
+        }
+        .receipt-id {
+            font-family: monospace;
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #475569;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+        .receipt-items { text-align: left; margin: 12px 0; padding-left: 20px; }
+        .receipt-items li { padding: 4px 0; color: #64748b; font-size: 0.9rem; }
+        .receipt-total {
+            font-size: 1.2rem; font-weight: 700; color: #1e293b;
+            margin-top: 12px; padding-top: 12px;
+            border-top: 2px dashed #e2e8f0;
+        }
+
+        /* Design Preview in modal */
+        .design-preview-box {
+            background: #fff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+        .design-preview-box h4 {
+            margin: 0 0 16px 0;
+            font-size: 1rem;
+            color: #475569;
+        }
+        .preview-canvas-modal {
+            background: 
+                linear-gradient(45deg, #f8fafc 25%, transparent 25%),
+                linear-gradient(-45deg, #f8fafc 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #f8fafc 75%),
+                linear-gradient(-45deg, transparent 75%, #f8fafc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #fff;
+            border-radius: 8px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-canvas-modal .canvas-item {
+            position: absolute;
+            user-select: none;
+            pointer-events: none;
+        }
+        .preview-canvas-modal .canvas-item img {
+            border-radius: 8px;
+            display: block;
+        }
+        .no-preview {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .modal-actions .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .modal-actions .btn-primary {
+            background: #4f46e5; color: white;
+        }
+        .modal-actions .btn-secondary {
+            background: #f3f4f6; color: #374151;
+        }
+        .modal-actions .btn-danger {
+            background: #ef4444; color: white;
+        }
+    </style>
 </head>
 <body>
     <div class="app">
@@ -29,7 +175,7 @@
                 </a>
             </nav>
             <div class="sidebar-logout">
-                <button class="btn btn-ghost" style="width: 100%; justify-content: center;">
+                <button class="btn btn-ghost" id="sidebarLogoutBtn" style="width: 100%; justify-content: center;">
                     <span>🚪</span> Logout
                 </button>
             </div>
@@ -42,8 +188,8 @@
                     <input type="text" placeholder="Search designs, orders...">
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-ghost"><span>👤</span> Profile</button>
-                    <button class="btn btn-ghost"><span>🚪</span> Logout</button>
+                    <span id="userDisplay" style="margin-right: 12px; font-weight: 500; color: var(--text-secondary);"></span>
+                    <button class="btn btn-ghost" id="logoutBtn"><span>🚪</span> Logout</button>
                 </div>
             </header>
 
@@ -71,82 +217,6 @@
                             </tr>
                         </thead>
                         <tbody id="ordersTable">
-                            <tr data-status="processing">
-                                <td><strong>#ORD-001</strong></td>
-                                <td>May 15, 2026</td>
-                                <td>Golden Star, Moonlight</td>
-                                <td>
-                                    <span class="status-badge status-processing">
-                                        <span class="status-dot"></span>
-                                        Processing
-                                    </span>
-                                </td>
-                                <td><strong>$45.00</strong></td>
-                                <td>
-                                    <div class="action-btns">
-                                        <button class="action-btn" title="View">👁</button>
-                                        <button class="action-btn" title="Edit">✏</button>
-                                        <button class="action-btn" title="Delete">🗑</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr data-status="shipped">
-                                <td><strong>#ORD-002</strong></td>
-                                <td>May 10, 2026</td>
-                                <td>Sparkle Set x3</td>
-                                <td>
-                                    <span class="status-badge status-shipped">
-                                        <span class="status-dot"></span>
-                                        Shipped
-                                    </span>
-                                </td>
-                                <td><strong>$78.00</strong></td>
-                                <td>
-                                    <div class="action-btns">
-                                        <button class="action-btn" title="View">👁</button>
-                                        <button class="action-btn" title="Edit">✏</button>
-                                        <button class="action-btn" title="Delete">🗑</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr data-status="delivered">
-                                <td><strong>#ORD-003</strong></td>
-                                <td>May 1, 2026</td>
-                                <td>Custom Chain</td>
-                                <td>
-                                    <span class="status-badge status-delivered">
-                                        <span class="status-dot"></span>
-                                        Delivered
-                                    </span>
-                                </td>
-                                <td><strong>$32.00</strong></td>
-                                <td>
-                                    <div class="action-btns">
-                                        <button class="action-btn" title="View">👁</button>
-                                        <button class="action-btn" title="Edit">✏</button>
-                                        <button class="action-btn" title="Delete">🗑</button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr data-status="processing">
-                                <td><strong>#ORD-004</strong></td>
-                                <td>May 18, 2026</td>
-                                <td>Gem Collection</td>
-                                <td>
-                                    <span class="status-badge status-processing">
-                                        <span class="status-dot"></span>
-                                        Processing
-                                    </span>
-                                </td>
-                                <td><strong>$120.00</strong></td>
-                                <td>
-                                    <div class="action-btns">
-                                        <button class="action-btn" title="View">👁</button>
-                                        <button class="action-btn" title="Edit">✏</button>
-                                        <button class="action-btn" title="Delete">🗑</button>
-                                    </div>
-                                </td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -154,181 +224,355 @@
         </div>
     </div>
 
+    <!-- View Order Modal -->
+    <div class="modal-overlay" id="viewModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📋 Order Details</h3>
+                <button class="modal-close" onclick="closeViewModal()">×</button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ===============================
+        // AUTH CONFIG
+        // ===============================
+        const ADMIN_EMAIL = "admin@gmail.com";
+
+        function getCurrentUser() {
+            return JSON.parse(localStorage.getItem("currentUser"));
+        }
+
+        function isAdmin(user) {
+            return user && user.email === ADMIN_EMAIL;
+        }
+
+        // ===============================
+        // PER-USER STORAGE KEYS
+        // ===============================
+        function getUserKey(baseKey) {
+            const user = getCurrentUser();
+            if (!user || !user.email) return baseKey;
+            return baseKey + "_" + user.email.replace(/[@.]/g, "_");
+        }
+        function getUserOrdersKey()   { return getUserKey('charm_orders'); }
+        function getUserDesignsKey()  { return getUserKey('charm_designs'); }
+
+        // ===============================
+        // AUTH GUARD
+        // ===============================
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            window.location.href = "index.html";
+        }
+
+        // ===============================
+        // LOGOUT
+        // ===============================
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "index.html";
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const logoutBtn = document.getElementById("logoutBtn");
+            const sidebarLogoutBtn = document.getElementById("sidebarLogoutBtn");
+            if (logoutBtn) logoutBtn.addEventListener("click", logout);
+            if (sidebarLogoutBtn) sidebarLogoutBtn.addEventListener("click", logout);
+
+            // Display current user
+            const userDisplay = document.getElementById("userDisplay");
+            if (userDisplay && currentUser) {
+                userDisplay.textContent = "👤 " + (currentUser.username || currentUser.email);
+            }
+        });
+
+        // ===============================
+        // INITIALIZE DEMO DATA (PER USER)
+        // ===============================
+        function initDemoData() {
+            const ordersKey = getUserOrdersKey();
+            if (!localStorage.getItem(ordersKey) || localStorage.getItem(ordersKey) === '[]') {
+                const demoOrders = [
+                    { id: 'ORD-001', status: 'processing', items: 'Golden Star, Moonlight', total: 45.00, date: '2026-05-15', created: Date.now() - 864000000 },
+                    { id: 'ORD-002', status: 'shipped', items: 'Sparkle Set x3', total: 78.00, date: '2026-05-10', created: Date.now() - 1209600000 },
+                    { id: 'ORD-003', status: 'delivered', items: 'Custom Chain', total: 32.00, date: '2026-05-01', created: Date.now() - 1900800000 },
+                    { id: 'ORD-004', status: 'processing', items: 'Gem Collection', total: 120.00, date: '2026-05-18', created: Date.now() - 432000000 }
+                ];
+                localStorage.setItem(ordersKey, JSON.stringify(demoOrders));
+            }
+        }
+
+        // ===============================
+        // HELPERS
+        // ===============================
+        function formatDate(dateString) {
+            if (!dateString) return 'Just now';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
+        function formatCurrency(amount) {
+            const num = parseFloat(amount) || 0;
+            return '$' + num.toFixed(2);
+        }
+
+        function getStatusBadge(status) {
+            const displayStatus = status === 'active' ? 'processing' : status;
+            const labels = {
+                'processing': 'Processing',
+                'shipped': 'Shipped',
+                'delivered': 'Delivered'
+            };
+            return `
+                <span class="status-badge status-${displayStatus}">
+                    <span class="status-dot"></span>
+                    ${labels[displayStatus] || displayStatus}
+                </span>
+            `;
+        }
+
+        function getItemsText(order) {
+            if (order.items && typeof order.items === 'string') return order.items;
+            if (order.designName) return order.designName;
+            if (order.items && typeof order.items === 'number') return order.items + ' item(s)';
+            return 'Custom Design';
+        }
+
+        function getTotal(order) {
+            if (order.total) return parseFloat(order.total);
+            const count = order.items || 1;
+            return count * 15;
+        }
+
+        function getDate(order) {
+            if (order.date) return order.date;
+            if (order.created) {
+                const d = new Date(order.created);
+                return d.toISOString().split('T')[0];
+            }
+            return new Date().toISOString().split('T')[0];
+        }
+
+        // ===============================
+        // RENDER ORDERS TABLE
+        // ===============================
+        function renderOrders(filter = 'all') {
+            const ordersKey = getUserOrdersKey();
+            const orders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+            const tbody = document.getElementById('ordersTable');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
+                            No orders yet. Create a design and place an order from the Designer Studio!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let visibleCount = 0;
+
+            orders.forEach(order => {
+                const displayStatus = order.status === 'active' ? 'processing' : order.status;
+                if (filter !== 'all' && displayStatus !== filter) return;
+                visibleCount++;
+
+                const tr = document.createElement('tr');
+                tr.dataset.status = displayStatus;
+                tr.dataset.orderId = order.id;
+                tr.innerHTML = `
+                    <td><strong>#${order.id}</strong></td>
+                    <td>${formatDate(getDate(order))}</td>
+                    <td>${getItemsText(order)}</td>
+                    <td>${getStatusBadge(order.status)}</td>
+                    <td><strong>${formatCurrency(getTotal(order))}</strong></td>
+                    <td>
+                        <div class="action-btns">
+                            <button class="action-btn" title="View" onclick="viewOrder('${order.id}')">👁</button>
+                            <button class="action-btn" title="Delete" onclick="deleteOrder('${order.id}')">🗑</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if (visibleCount === 0 && filter !== 'all') {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
+                            No ${filter} orders found.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        // ===============================
+        // FILTER ORDERS
+        // ===============================
         function filterOrders(status, tabBtn) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             tabBtn.classList.add('active');
-            document.querySelectorAll('#ordersTable tr').forEach(row => {
-                row.style.display = (status === 'all' || row.dataset.status === status) ? '' : 'none';
-            });
-        }
-    </script>
-</body>
-<script>
-    // --- Initialize Demo Data (only if completely empty) ---
-    function initDemoData() {
-        const existing = localStorage.getItem('charm_orders');
-        if (!existing || existing === '[]') {
-            const demoOrders = [
-                { id: 'ORD-001', status: 'processing', items: 'Golden Star, Moonlight', total: 45.00, date: '2026-05-15', created: Date.now() - 864000000 },
-                { id: 'ORD-002', status: 'shipped', items: 'Sparkle Set x3', total: 78.00, date: '2026-05-10', created: Date.now() - 1209600000 },
-                { id: 'ORD-003', status: 'delivered', items: 'Custom Chain', total: 32.00, date: '2026-05-01', created: Date.now() - 1900800000 },
-                { id: 'ORD-004', status: 'processing', items: 'Gem Collection', total: 120.00, date: '2026-05-18', created: Date.now() - 432000000 }
-            ];
-            localStorage.setItem('charm_orders', JSON.stringify(demoOrders));
-        }
-    }
-
-    // --- Format Date ---
-    function formatDate(dateString) {
-        if (!dateString) return 'Just now';
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return dateString;
-        return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    }
-
-    // --- Format Currency ---
-    function formatCurrency(amount) {
-        const num = parseFloat(amount) || 0;
-        return '$' + num.toFixed(2);
-    }
-
-    // --- Status Badge HTML ---
-    function getStatusBadge(status) {
-        // Map 'active' (from studio) to 'processing'
-        const displayStatus = status === 'active' ? 'processing' : status;
-        const labels = {
-            'processing': 'Processing',
-            'shipped': 'Shipped',
-            'delivered': 'Delivered'
-        };
-        return `
-            <span class="status-badge status-${displayStatus}">
-                <span class="status-dot"></span>
-                ${labels[displayStatus] || displayStatus}
-            </span>
-        `;
-    }
-
-    // --- Get Items Text ---
-    function getItemsText(order) {
-        if (order.items && typeof order.items === 'string') return order.items;
-        if (order.designName) return order.designName;
-        if (order.items && typeof order.items === 'number') return order.items + ' item(s)';
-        return 'Custom Design';
-    }
-
-    // --- Get Total ---
-    function getTotal(order) {
-        if (order.total) return parseFloat(order.total);
-        // Estimate: $15 per item
-        const count = order.items || 1;
-        return count * 15;
-    }
-
-    // --- Get Date ---
-    function getDate(order) {
-        if (order.date) return order.date;
-        if (order.created) {
-            const d = new Date(order.created);
-            return d.toISOString().split('T')[0];
-        }
-        return new Date().toISOString().split('T')[0];
-    }
-
-    // --- Render Orders Table ---
-    function renderOrders(filter = 'all') {
-        const orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
-        const tbody = document.getElementById('ordersTable');
-        tbody.innerHTML = '';
-
-        if (orders.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
-                        No orders yet. Create a design and place an order from the Designer Studio!
-                    </td>
-                </tr>
-            `;
-            return;
+            renderOrders(status);
         }
 
-        let visibleCount = 0;
+        // ===============================
+        // VIEW ORDER (Receipt + Design Preview)
+        // ===============================
+        function viewOrder(orderId) {
+            const ordersKey = getUserOrdersKey();
+            const orders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
 
-        orders.forEach(order => {
-            // Map 'active' to 'processing' for filtering/display
-            const displayStatus = order.status === 'active' ? 'processing' : order.status;
-            
-            if (filter !== 'all' && displayStatus !== filter) return;
-            visibleCount++;
+            const displayStatus = order.status === 'active' ? 'Processing' : order.status;
+            const itemsText = getItemsText(order);
+            const total = getTotal(order);
+            const date = getDate(order);
 
-            const tr = document.createElement('tr');
-            tr.dataset.status = displayStatus;
-            tr.dataset.orderId = order.id;
-            tr.innerHTML = `
-                <td><strong>#${order.id}</strong></td>
-                <td>${formatDate(getDate(order))}</td>
-                <td>${getItemsText(order)}</td>
-                <td>${getStatusBadge(order.status)}</td>
-                <td><strong>${formatCurrency(getTotal(order))}</strong></td>
-                <td>
-                    <div class="action-btns">
-                        <button class="action-btn" title="View" onclick="viewOrder('${order.id}')">👁</button>
-                        <button class="action-btn" title="Delete" onclick="deleteOrder('${order.id}')">🗑</button>
+            // Build design preview HTML from order's saved designState
+            let previewHtml = '';
+            if (order.designState && order.designState.items && order.designState.items.length > 0) {
+                const items = order.designState.items;
+                const ratio = order.designState.ratio || '1:1';
+                const ratioSizes = { '1:1': [200,200], '4:5': [200,250], '9:16': [150,267], '16:9': [267,150], '3:2': [240,160] };
+                const [w, h] = ratioSizes[ratio] || [200, 200];
+
+                // Scale down positions for preview (design canvas is ~300-400px, preview is 200px)
+                const scaleFactor = w / 350;
+
+                previewHtml = `
+                    <div class="design-preview-box">
+                        <h4>🎨 Design Preview</h4>
+                        <div class="preview-canvas-modal" style="width:${w}px; height:${h}px;">
+                            ${items.map(item => {
+                                const sx = Math.round((item.x || 0) * scaleFactor);
+                                const sy = Math.round((item.y || 0) * scaleFactor);
+                                const fs = Math.round((item.scale || 1) * 22);
+                                if (item.type === 'image') {
+                                    const imgW = Math.round((item.scale || 1) * 50);
+                                    return `<div class="canvas-item" style="left:${sx}px; top:${sy}px;">
+                                        <img src="${item.src}" style="width:${imgW}px; height:auto; border-radius:6px; display:block;">
+                                    </div>`;
+                                }
+                                return `<div class="canvas-item" style="left:${sx}px; top:${sy}px; font-size:${fs}px; line-height:1;">${item.emoji || '✨'}</div>`;
+                            }).join('')}
+                        </div>
+                        <div style="margin-top:12px; font-size:0.85rem; color:#64748b;">
+                            ${items.length} element(s) · ${ratio}
+                        </div>
                     </div>
-                </td>
-            `;
-            tbody.appendChild(tr);
-        });
+                `;
+            } else {
+                previewHtml = `
+                    <div class="design-preview-box">
+                        <h4>🎨 Design Preview</h4>
+                        <div class="preview-canvas-modal" style="width:200px; height:200px;">
+                            <span class="no-preview">Design preview not available</span>
+                        </div>
+                        <div style="margin-top:12px; font-size:0.85rem; color:#64748b;">
+                            ${itemsText}
+                        </div>
+                    </div>
+                `;
+            }
 
-        if (visibleCount === 0 && filter !== 'all') {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 40px; color: #9ca3af;">
-                        No ${filter} orders found.
-                    </td>
-                </tr>
+            const body = document.getElementById('viewModalBody');
+            body.innerHTML = `
+                <div class="receipt-box">
+                    <h4>✅ Payment Receipt</h4>
+                    <div class="receipt-id">${order.id}</div>
+                    <div style="color:#64748b; font-size:0.85rem; margin-bottom:12px;">
+                        ${new Date(order.created || Date.now()).toLocaleString()}
+                    </div>
+                    <div style="text-align:left; margin-bottom:12px;">
+                        <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:4px;">Billed to</div>
+                        <div style="font-weight:500; color:#1e293b;">${currentUser.username || currentUser.email}</div>
+                        ${order.gcashNumber ? `<div style="font-size:0.85rem; color:#64748b;">GCash: ${order.gcashNumber}</div>` : ''}
+                    </div>
+                    <ul class="receipt-items">
+                        <li>🎨 ${itemsText}</li>
+                        <li>📦 ${order.items && typeof order.items === 'number' ? order.items : '1'} item(s) × $15.00</li>
+                    </ul>
+                    <div class="receipt-total">${formatCurrency(total)}</div>
+                    <div style="margin-top:12px; padding-top:12px; border-top:1px dashed #e2e8f0; font-size:0.8rem; color:#94a3b8;">
+                        Status: <strong style="color:#475569; text-transform:capitalize;">${displayStatus}</strong>
+                    </div>
+                </div>
+                ${previewHtml}
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="downloadReceipt('${order.id}')">📥 Download Receipt</button>
+                    <button class="btn btn-primary" onclick="closeViewModal()">Close</button>
+                </div>
             `;
+            document.getElementById('viewModal').classList.add('active');
         }
-    }
 
-    // --- Filter Orders ---
-    function filterOrders(status, tabBtn) {
-        document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-        tabBtn.classList.add('active');
-        renderOrders(status);
-    }
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('active');
+        }
 
-    // --- View Order ---
-    function viewOrder(orderId) {
-        const orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
-        const order = orders.find(o => o.id === orderId);
-        if (!order) return;
-        
-        const displayStatus = order.status === 'active' ? 'Processing' : order.status;
-        alert(`Order #${order.id}\nStatus: ${displayStatus}\nItems: ${getItemsText(order)}\nTotal: ${formatCurrency(getTotal(order))}\nDate: ${formatDate(getDate(order))}`);
-    }
+        function downloadReceipt(orderId) {
+            const ordersKey = getUserOrdersKey();
+            const orders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+            const order = orders.find(o => o.id === orderId);
+            if (!order) return;
 
-    // --- Delete Order ---
-    function deleteOrder(orderId) {
-        if (!confirm('Are you sure you want to delete order #' + orderId + '?')) return;
-        
-        let orders = JSON.parse(localStorage.getItem('charm_orders') || '[]');
-        orders = orders.filter(o => o.id !== orderId);
-        localStorage.setItem('charm_orders', JSON.stringify(orders));
-        
-        // Re-render with current active filter
-        const activeTab = document.querySelector('.tab.active');
-        const tabText = activeTab.textContent.trim().toLowerCase();
-        const currentFilter = tabText.includes('all') ? 'all' : 
-                             tabText.includes('processing') ? 'processing' :
-                             tabText.includes('shipped') ? 'shipped' : 'delivered';
-        renderOrders(currentFilter);
-    }
+            const displayStatus = order.status === 'active' ? 'Processing' : order.status;
+            const content = `
+CHARM STUDIO - ORDER RECEIPT
+==============================
+Order ID: ${order.id}
+Date: ${new Date(order.created || Date.now()).toLocaleString()}
+Status: ${displayStatus.toUpperCase()}
 
-    // --- Listen for Storage Changes (from other tabs) ---
-    window.addEventListener('storage', (e) => {
-        if (e.key === 'charm_orders') {
+BILLED TO
+------------------------------
+Name: ${currentUser.username || currentUser.email}
+${order.gcashNumber ? 'GCash: ' + order.gcashNumber : ''}
+
+ORDER DETAILS
+------------------------------
+Items: ${getItemsText(order)}
+Quantity: ${order.items && typeof order.items === 'number' ? order.items : '1'} item(s)
+Unit Price: $15.00
+
+TOTAL: ${formatCurrency(getTotal(order))}
+
+Thank you for your order!
+Charm Studio
+            `.trim();
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CharmStudio_Receipt_${order.id}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ===============================
+        // DELETE ORDER
+        // ===============================
+        function deleteOrder(orderId) {
+            if (!confirm('Are you sure you want to delete order #' + orderId + '?')) return;
+
+            const ordersKey = getUserOrdersKey();
+            let orders = JSON.parse(localStorage.getItem(ordersKey) || '[]');
+            orders = orders.filter(o => o.id !== orderId);
+            localStorage.setItem(ordersKey, JSON.stringify(orders));
+
             const activeTab = document.querySelector('.tab.active');
             const tabText = activeTab.textContent.trim().toLowerCase();
             const currentFilter = tabText.includes('all') ? 'all' : 
@@ -336,10 +580,28 @@
                                  tabText.includes('shipped') ? 'shipped' : 'delivered';
             renderOrders(currentFilter);
         }
-    });
 
-    // --- Initialize ---
-    initDemoData();
-    renderOrders('all');
-</script>
+        // ===============================
+        // STORAGE LISTENER
+        // ===============================
+        window.addEventListener('storage', (e) => {
+            if (e.key === getUserOrdersKey()) {
+                const activeTab = document.querySelector('.tab.active');
+                const tabText = activeTab.textContent.trim().toLowerCase();
+                const currentFilter = tabText.includes('all') ? 'all' : 
+                                     tabText.includes('processing') ? 'processing' :
+                                     tabText.includes('shipped') ? 'shipped' : 'delivered';
+                renderOrders(currentFilter);
+            }
+        });
+
+        // ===============================
+        // INITIALIZE
+        // ===============================
+        document.addEventListener("DOMContentLoaded", () => {
+            initDemoData();
+            renderOrders('all');
+        });
+    </script>
+</body>
 </html>
